@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
     //pos_file
 
     FILE *fpo0;
-    fpo0 = fopen("../output/initial_pos_lipid.cdv", "w");
+    fpo0 = fopen(argv[5], "w");
     if (fpo0 == NULL)
     {
         printf("ERROR_initial_pos_lipid.cdv\n");
@@ -298,7 +298,7 @@ int main(int argc, char *argv[])
     */
     //vel_file
     FILE *fpo1;
-    fpo1 = fopen("../output/initial_vel_lipid.cdv", "w");
+    fpo1 = fopen(argv[6], "w");
     if (fpo1 == NULL)
     {
         printf("ERROR_initial_vel_lipid.cdv\n");
@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
 
     */
     //bond_fileここからはofstream記法で出力する．
-    std::ofstream fpo2("../output/bond_info.cdv", std::ios::out);
+    std::ofstream fpo2(argv[7], std::ios::out);
     for (int i = 0; i < double_vesicle_pinfo.size(); i++)
     {
         //"&&"条件で，double_vesicle_pinfo.at(i).nbond == 1のときに重複して出力してしまうのを防ぐ．
@@ -344,7 +344,7 @@ int main(int argc, char *argv[])
     */
     //bond_file ofstream記法で出力する．
     //angle_file
-    std::ofstream fpo3("../output/angle_info.cdv", std::ios::out);
+    std::ofstream fpo3(argv[8], std::ios::out);
     for (int i = 0; i < double_vesicle_pinfo.size(); i++)
     {
         if (double_vesicle_pinfo.at(i).nangle == 1)
@@ -371,7 +371,7 @@ int main(int argc, char *argv[])
     }
     num = num_water + num_lipid;
     rho = num / (box_size_x * box_size_y * box_size_z);
-    std::string filename0 = "../output/detail.txt";
+    std::string filename0 = argv[9];
     std::ofstream writing_file0;
     writing_file0.open(filename0, std::ios::out);
     writing_file0 << "自分で決めるパラメータ" << std::endl;
