@@ -242,7 +242,15 @@ int main(int argc, char *argv[])
     for (int i = 0; i < only_vesicle_pinfo.size(); i++)
     {
         only_vesicle_pinfo.at(i).posz += box_size_z;
-        only_vesicle_pinfo.at(i).id += double_vesicle_pinfo.size() + 1;
+        only_vesicle_pinfo.at(i).id += double_vesicle_pinfo.size() + 1 - i;
+        only_vesicle_pinfo.at(i).bond_pair[0] += double_vesicle_pinfo.size() + 1 - i;
+        only_vesicle_pinfo.at(i).bond_pair[1] += double_vesicle_pinfo.size() + 1 - i;
+        only_vesicle_pinfo.at(i).angle_pair[0][0] += double_vesicle_pinfo.size() + 1 - i;
+        only_vesicle_pinfo.at(i).angle_pair[0][1] += double_vesicle_pinfo.size() + 1 - i;
+        only_vesicle_pinfo.at(i).angle_pair[0][2] += double_vesicle_pinfo.size() + 1 - i;
+        only_vesicle_pinfo.at(i).angle_pair[1][0] += double_vesicle_pinfo.size() + 1 - i;
+        only_vesicle_pinfo.at(i).angle_pair[1][1] += double_vesicle_pinfo.size() + 1 - i;
+        only_vesicle_pinfo.at(i).angle_pair[1][2] += double_vesicle_pinfo.size() + 1 - i;
         double_vesicle_pinfo.push_back(only_vesicle_pinfo.at(i));
     }
 
