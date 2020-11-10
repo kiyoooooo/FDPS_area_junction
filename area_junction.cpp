@@ -198,16 +198,57 @@ int main(int argc, char *argv[])
 
     //新しい配列を生成
     const double margin = 0.2;
-    std::vector<ParticleInfo> next_pinfo;
+    std::vector<ParticleInfo> only_vesicle_pinfo;
+    std::vector<ParticleInfo> double_vesicle_pinfo;
     for (int i = 0; i < pinfo.size(); i++)
     {
         if (pinfo.at(i).posz < upper_max + margin && pinfo.at(i).posz > under_max - margin)
         {
-            next_pinfo.push_back(pinfo.at(i));
+            only_vesicle_pinfo.push_back(pinfo.at(i));
+        }
+        if (pinfo.at(i).posz < upper_max + margin)
+        {
+            double_vesicle_pinfo.push_back(pinfo.at(i));
         }
     }
-    std::cout << pinfo.size() << " " << next_pinfo.size() << std::endl;
+    for (int i = 0; i < only_vesicle_pinfo.size(); i++)
+    {
+        only_vesicle_pinfo.at(i).id = i;
+    }
+    for (int i = 0; i < double_vesicle_pinfo.size(); i++)
+    {
+        double_vesicle_pinfo.at(i).id = i;
+    }
+    //    std::cout << pinfo.size() << " " << only_vesicle_pinfo.size() << std::endl;
+    /*
 
+
+    area_junctionを開始する．
+    手順
+    ・上の手順で，double_vesicle_pinfoという，ベシクルとその下に存在する水の系を取り出してきた．
+    ・double_vesicle_pinfoにonly_vesicle_pinfoを追加する形で，完成させる
+    ・*/
+    //box_sz = under_max - margin;
+    //box_ez = upper_max + margin;
+    double vesicle_sz = under_max - margin;
+    double vesicle_ez = upper_max + margin;
+    double vesilce_margin_rad = vesicle_sz - vesicle_ez;
+    //detail.txtの記入にも必要
+    double box_size_x = box_ex - box_sx,
+           box_size_y = box_ey - box_sy,
+           box_size_z = vesicle_ez - vesicle_sz;
+    uint32_t num_water = 0, num_lipid = 0, num;
+    double rho;
+    for (int i = 0; i < only_vesicle_pinfo.size(); i++)
+    {
+        only_vesicle_pinfo.at(i).posz += box_size_z;
+        only_vesicle_pinfo.at(i).id += double_vesicle_pinfo.size() + 1;
+        double_vesicle_pinfo.push_back(only_vesicle_pinfo.at(i));
+    }
+
+    //    box_size_z = (box_ez + (vesicle_ez - vesicle_sz) - (box_ez - vesicle_ez)) - box_sz;
+    box_size_z = (box_ez - box_sz) * 2 - (box_ez - vesicle_ez) * 3;
+    box_ez += (box_ez - box_sz) - (box_ez - vesicle_ez) * 3;
 #if 1
     /*
     
@@ -217,8 +258,7 @@ int main(int argc, char *argv[])
     出力ファイルを生成する．*/
     //open file
     //pos_file
-    box_sz = under_max - margin;
-    box_ez = upper_max + margin;
+
     FILE *fpo0;
     fpo0 = fopen("../output/initial_pos_lipid.cdv", "w");
     if (fpo0 == NULL)
@@ -231,14 +271,14 @@ int main(int argc, char *argv[])
     {
         fprintf(fpo0, "%s \n", delete_str[i].c_str());
     }
-    for (int i = 0; i < next_pinfo.size(); i++)
+    for (int i = 0; i < double_vesicle_pinfo.size(); i++)
     {
         fprintf(fpo0, "%d %d   %lf   %lf   %lf \n",
-                next_pinfo.at(i).id + 1,
-                next_pinfo.at(i).type + 1,
-                next_pinfo.at(i).posx,
-                next_pinfo.at(i).posy,
-                next_pinfo.at(i).posz);
+                double_vesicle_pinfo.at(i).id + 1,
+                double_vesicle_pinfo.at(i).type + 1,
+                double_vesicle_pinfo.at(i).posx,
+                double_vesicle_pinfo.at(i).posy,
+                double_vesicle_pinfo.at(i).posz);
     }
     fclose(fpo0);
     /*
@@ -256,13 +296,13 @@ int main(int argc, char *argv[])
         printf("ERROR_initial_vel_lipid.cdv\n");
         return -1;
     }
-    for (int i = 0; i < next_pinfo.size(); i++)
+    for (int i = 0; i < double_vesicle_pinfo.size(); i++)
     {
         fprintf(fpo1, "%d   %lf   %lf   %lf \n",
-                next_pinfo.at(i).id + 1,
-                next_pinfo.at(i).velx,
-                next_pinfo.at(i).vely,
-                next_pinfo.at(i).velz);
+                double_vesicle_pinfo.at(i).id + 1,
+                double_vesicle_pinfo.at(i).velx,
+                double_vesicle_pinfo.at(i).vely,
+                double_vesicle_pinfo.at(i).velz);
     }
     fclose(fpo1);
     /*
@@ -274,16 +314,16 @@ int main(int argc, char *argv[])
     */
     //bond_fileここからはofstream記法で出力する．
     std::ofstream fpo2("../output/bond_info.cdv", std::ios::out);
-    for (int i = 0; i < next_pinfo.size(); i++)
+    for (int i = 0; i < double_vesicle_pinfo.size(); i++)
     {
-        //"&&"条件で，next_pinfo.at(i).nbond == 1のときに重複して出力してしまうのを防ぐ．
-        if (next_pinfo.at(i).nbond == 1 && next_pinfo.at(i).id < next_pinfo.at(i).bond_pair[0])
+        //"&&"条件で，double_vesicle_pinfo.at(i).nbond == 1のときに重複して出力してしまうのを防ぐ．
+        if (double_vesicle_pinfo.at(i).nbond == 1 && double_vesicle_pinfo.at(i).id < double_vesicle_pinfo.at(i).bond_pair[0])
         {
-            fpo2 << next_pinfo.at(i).id + 1 << "   " << next_pinfo.at(i).bond_pair[0] + 1 << "   " << next_pinfo.at(i).bond_type[0] + 1 << std::endl;
+            fpo2 << double_vesicle_pinfo.at(i).id + 1 << "   " << double_vesicle_pinfo.at(i).bond_pair[0] + 1 << "   " << double_vesicle_pinfo.at(i).bond_type[0] + 1 << std::endl;
         }
-        else if (next_pinfo.at(i).nbond == 2)
+        else if (double_vesicle_pinfo.at(i).nbond == 2)
         {
-            fpo2 << next_pinfo.at(i).id + 1 << "   " << next_pinfo.at(i).bond_pair[1] + 1 << "   " << next_pinfo.at(i).bond_type[0] + 1 << std::endl;
+            fpo2 << double_vesicle_pinfo.at(i).id + 1 << "   " << double_vesicle_pinfo.at(i).bond_pair[1] + 1 << "   " << double_vesicle_pinfo.at(i).bond_type[0] + 1 << std::endl;
         }
     }
     fpo2.close();
@@ -297,11 +337,11 @@ int main(int argc, char *argv[])
     //bond_file ofstream記法で出力する．
     //angle_file
     std::ofstream fpo3("../output/angle_info.cdv", std::ios::out);
-    for (int i = 0; i < next_pinfo.size(); i++)
+    for (int i = 0; i < double_vesicle_pinfo.size(); i++)
     {
-        if (next_pinfo.at(i).nangle == 1)
+        if (double_vesicle_pinfo.at(i).nangle == 1)
         {
-            fpo3 << next_pinfo.at(i).angle_pair[0][0] + 1 << "   " << next_pinfo.at(i).angle_pair[0][1] + 1 << "   " << next_pinfo.at(i).angle_pair[0][2] + 1 << "   " << next_pinfo.at(i).angle_type[0] + 1 << std::endl;
+            fpo3 << double_vesicle_pinfo.at(i).angle_pair[0][0] + 1 << "   " << double_vesicle_pinfo.at(i).angle_pair[0][1] + 1 << "   " << double_vesicle_pinfo.at(i).angle_pair[0][2] + 1 << "   " << double_vesicle_pinfo.at(i).angle_type[0] + 1 << std::endl;
         }
     }
     fpo3.close();
@@ -313,21 +353,16 @@ int main(int argc, char *argv[])
 
 
     */
-    //detail.txtの記入
-    const double box_size_x = box_ex - box_sx,
-                 box_size_y = box_ey - box_sy,
-                 box_size_z = box_ez - box_sz;
-    uint32_t num_water = 0, num_lipid = 0, num;
-    double rho;
-    for (int i = 0; i < next_pinfo.size(); i++)
+
+    for (int i = 0; i < double_vesicle_pinfo.size(); i++)
     {
-        if (next_pinfo.at(i).type + 1 == 3)
+        if (double_vesicle_pinfo.at(i).type + 1 == 3)
             num_water++;
         else
             num_lipid++;
     }
     num = num_water + num_lipid;
-    rho = num/(box_size_x*box_size_y*box_size_z);
+    rho = num / (box_size_x * box_size_y * box_size_z);
     std::string filename0 = "../output/detail.txt";
     std::ofstream writing_file0;
     writing_file0.open(filename0, std::ios::out);
