@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     sscanf(delete_str[0].c_str(), "'box_sx=%lf box_sy=%lf box_sz=%lf box_ex=%lf box_ey=%lf box_ez=%lf box_wt=%lf",
            &box_sx, &box_sy, &box_sz, &box_ex, &box_ey, &box_ez, &box_wt);
     //    std::cout <<std::setprecision(10)<< box_sx << " " << box_sy << " " << box_sz << " " << box_ex << " " << box_ey << " " << box_ez << " " << box_wt << std::endl;
-    std::sort(pinfo.begin(), pinfo.end());//classでオペレータを定義して利用している．
+    std::sort(pinfo.begin(), pinfo.end()); //classでオペレータを定義して利用している．
     /*
     
     
@@ -206,7 +206,8 @@ int main(int argc, char *argv[])
     //std::cout << upper_max << " " << under_max << std::endl;
 
     //新しい配列を生成
-    const double margin = 0.2;
+    //const double margin = 0.2; //vesicle_input3000_midium_water0
+    const double margin = 0.01; //vesicle_input3000_midium_water1
     std::vector<ParticleInfo> only_vesicle_pinfo;
     std::vector<ParticleInfo> double_vesicle_pinfo;
     for (int i = 0; i < pinfo.size(); i++)
@@ -217,6 +218,10 @@ int main(int argc, char *argv[])
         }
         if (pinfo.at(i).posz < upper_max + margin)
         {
+            if (pinfo.at(i).type == 0 || pinfo.at(i).type == 1)
+            {
+                pinfo.at(i).velz += 0.60;
+            } //追加したベシクルに下方向の速度を追加．オリジナルコードには追加していない．
             double_vesicle_pinfo.push_back(pinfo.at(i));
         }
     }
@@ -242,10 +247,12 @@ int main(int argc, char *argv[])
     double vesicle_sz = under_max - margin;
     double vesicle_ez = upper_max + margin;
     double vesilce_margin_rad = vesicle_sz - vesicle_ez;
+
     //detail.txtの記入にも必要
     double box_size_x = box_ex - box_sx,
            box_size_y = box_ey - box_sy,
            box_size_z = vesicle_ez - vesicle_sz;
+    //           box_size_z = vesicle_ez - vesicle_sz;
     uint32_t num_water = 0, num_lipid = 0, num;
     double rho;
     for (int i = 0; i < only_vesicle_pinfo.size(); i++)
@@ -260,12 +267,20 @@ int main(int argc, char *argv[])
         only_vesicle_pinfo.at(i).angle_pair[1][0] += double_vesicle_pinfo.size() - i;
         only_vesicle_pinfo.at(i).angle_pair[1][1] += double_vesicle_pinfo.size() - i;
         only_vesicle_pinfo.at(i).angle_pair[1][2] += double_vesicle_pinfo.size() - i;
+        if (only_vesicle_pinfo.at(i).type == 0 || only_vesicle_pinfo.at(i).type == 1)
+        {
+            only_vesicle_pinfo.at(i).velz -= 0.60;
+        } //追加したベシクルに下方向の速度を追加．オリジナルコードには追加していない．
         double_vesicle_pinfo.push_back(only_vesicle_pinfo.at(i));
     }
 
     //    box_size_z = (box_ez + (vesicle_ez - vesicle_sz) - (box_ez - vesicle_ez)) - box_sz;
-    box_size_z = (box_ez - box_sz) * 2 - (box_ez - vesicle_ez) * 3;
-    box_ez += (box_ez - box_sz) - (box_ez - vesicle_ez) * 3;
+
+    box_size_z = (box_ez - box_sz) * 2 - (box_ez - vesicle_ez) * 2 - (vesicle_sz - box_sz) * 1;
+    box_ez += (box_ez - box_sz) - (box_ez - vesicle_ez) * 2 - (vesicle_sz - box_sz) * 1;
+    //これは間違っているが，計算が流れる．
+    //box_size_z = (box_ez - box_sz) * 2 - (box_ez - vesicle_ez) * 3;
+    //box_ez += (box_ez - box_sz) - (box_ez - vesicle_ez) * 3;
 #if 1
     /*
     
