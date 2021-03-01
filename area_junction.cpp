@@ -9,6 +9,7 @@
 #include <string.h>      //文字列の代入に使う
 #include <bits/stdc++.h> //piの利用で必要(M_PI)
 //complete
+//速度を追加したもの/Users/kiyoshirookada/Desktop/work_for_ib03/FDPS_area_junction
 class ParticleInfo
 {
 public:
